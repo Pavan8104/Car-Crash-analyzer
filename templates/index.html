@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crash Analysis Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="dashboard-panel">
+      <header class="panel-header">
+        <div>
+          <p class="eyebrow">Sentinel AI Engineering</p>
+          <h1>Crash Analysis Dashboard</h1>
+          <p class="description">Evaluate impact physics, injury risk, and safety recommendations with a modern, premium dashboard.</p>
+        </div>
+      </header>
+
+      <section class="form-card">
+        <h2>Crash Input</h2>
+        <form id="analysis-form">
+          <label>Speed (km/h)</label>
+          <div class="slider-row">
+            <input type="range" id="speed" name="speed" min="0" max="200" value="50" />
+            <span id="speed-value">50</span>
+          </div>
+
+          <label>Collision Type</label>
+          <select name="collision" id="collision">
+            <option value="frontal">Frontal</option>
+            <option value="rear">Rear</option>
+            <option value="side">Side</option>
+            <option value="rollover">Rollover</option>
+          </select>
+
+          <div class="toggle-grid">
+            <label class="toggle-label">
+              <span>Seatbelt</span>
+              <input type="checkbox" id="seatbelt" name="seatbelt" checked />
+              <span class="slider"></span>
+            </label>
+
+            <label class="toggle-label">
+              <span>Airbags</span>
+              <input type="checkbox" id="airbags" name="airbags" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <button type="submit" class="primary-button">Analyze Crash</button>
+        </form>
+      </section>
+
+      <section class="results-card" id="results-card" hidden>
+        <div class="result-header">
+          <div>
+            <p class="label">Risk Level</p>
+            <span id="risk-level" class="risk-badge">Medium</span>
+          </div>
+          <div class="metric-group">
+            <div class="metric-card">
+              <span>Impact Force</span>
+              <strong id="impact-force">0 kN</strong>
+            </div>
+            <div class="metric-card">
+              <span>Impact Energy</span>
+              <strong id="impact-energy">0 kJ</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <h3>Injury Scenarios</h3>
+          <div class="injury-grid">
+            <div>
+              <p class="subheading">Severe</p>
+              <ul id="severe-list"></ul>
+            </div>
+            <div>
+              <p class="subheading">Moderate</p>
+              <ul id="moderate-list"></ul>
+            </div>
+            <div>
+              <p class="subheading">Minor</p>
+              <ul id="minor-list"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <h3>Safety Suggestions</h3>
+          <ul id="suggestions-list" class="suggestions-list"></ul>
+        </div>
+      </section>
+
+      <div class="page-footer">
+        <p>Designed for modern crash analysis and injury prediction workflows.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('analysis-form');
+    const speedTrack = document.getElementById('speed');
+    const speedValue = document.getElementById('speed-value');
+    const resultsCard = document.getElementById('results-card');
+    const riskLevel = document.getElementById('risk-level');
+    const impactForce = document.getElementById('impact-force');
+    const impactEnergy = document.getElementById('impact-energy');
+    const severeList = document.getElementById('severe-list');
+    const moderateList = document.getElementById('moderate-list');
+    const minorList = document.getElementById('minor-list');
+    const suggestionsList = document.getElementById('suggestions-list');
+
+    speedTrack.addEventListener('input', () => {
+      speedValue.textContent = speedTrack.value;
+    });
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const payload = new URLSearchParams();
+
+      payload.append('speed', formData.get('speed'));
+      payload.append('collision', formData.get('collision'));
+      payload.append('seatbelt', formData.get('seatbelt') ? 'true' : 'false');
+      payload.append('airbags', formData.get('airbags') ? 'true' : 'false');
+
+      const response = await fetch('/analyze', {
+        method: 'POST',
+        body: payload
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Unable to analyze crash at this time.');
+        return;
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        alert(result.error || 'Unable to analyze crash.');
+        return;
+      }
+
+      const data = result.data;
+      resultsCard.hidden = false;
+      riskLevel.textContent = data.summary.risk_level;
+      riskLevel.className = `risk-badge risk-${data.summary.risk_level.toLowerCase()}`;
+      impactForce.textContent = `${data.summary.impact_force_kN} kN`;
+      impactEnergy.textContent = `${data.summary.impact_energy_kJ} kJ`;
+
+      const fillList = (element, items) => {
+        element.innerHTML = items.length ? items.map(item => `<li>${item}</li>`).join('') : '<li class="empty">No items</li>';
+      };
+
+      fillList(severeList, data.injuries.Severe || []);
+      fillList(moderateList, data.injuries.Moderate || []);
+      fillList(minorList, data.injuries.Minor || []);
+      fillList(suggestionsList, data.safety_suggestions || []);
+    });
+  </script>
+</body>
+</html>

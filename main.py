@@ -32,6 +32,9 @@ def analyze_crash(speed_kmh: float, collision_type: str, seatbelt: bool, airbags
     return format_report(report)
 
 
+run_analysis = analyze_crash
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Crash Analysis & Injury Prediction System")
     parser.add_argument("--speed", type=float, default=50.0, help="Vehicle speed in km/h")
