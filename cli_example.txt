@@ -1,0 +1,3 @@
+Example CLI usage:
+
+python main.py --speed 90 --collision side --seatbelt --airbags --json
