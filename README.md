@@ -41,6 +41,26 @@ streamlit run streamlit_app.py
 python main.py --speed 80 --collision frontal --seatbelt --airbags --json
 ```
 
+### Sample Output
+
+```json
+{
+  "summary": {
+    "risk_level": "Medium",
+    "impact_force_kN": 400.0,
+    "impact_energy_kJ": 425.9
+  },
+  "injuries": {
+    "Minor": [],
+    "Moderate": ["rib fracture", "disorientation"],
+    "Severe": ["arm fracture", "organ damage", "spinal injury", "pelvis fracture"]
+  },
+  "safety_suggestions": [
+    "Check vehicle deformation and report pain in neck, chest, or abdomen."
+  ]
+}
+```
+
 ## Future Improvements
 
 - Add more detailed vehicle and occupant profiles
