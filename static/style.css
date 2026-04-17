@@ -118,6 +118,8 @@ input[type="range"] {
 select,
 input[type="range"] {
   width: 100%;
+  /* taller touch target on mobile */
+  touch-action: pan-x;
 }
 
 select {
@@ -127,6 +129,8 @@ select {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
   margin-bottom: 24px;
+  /* prevents iOS zoom on focus */
+  font-size: max(16px, 0.9rem);
 }
 
 .toggle-grid {
