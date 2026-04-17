@@ -659,9 +659,127 @@ li.injury-item {
   text-align: center;
 }
 
+/* -- header row: title on left, buttons on right -- */
+.header-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* -- group of buttons in the header -- */
+.header-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+
+/* -- shared style for both header pills -- */
+.header-pill-btn {
+  display: block;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(91, 141, 239, 0.08);
+  border: 1px solid rgba(91, 141, 239, 0.25);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
+  transition: background 0.2s;
+}
+
+.header-pill-btn:hover {
+  background: rgba(91, 141, 239, 0.16);
+}
+
+/* -- owner/portfolio button gets a green tint -- */
+.owner-btn {
+  background: rgba(53, 182, 121, 0.08);
+  border-color: rgba(53, 182, 121, 0.28);
+  color: var(--success);
+}
+
+.owner-btn:hover {
+  background: rgba(53, 182, 121, 0.16);
+}
+
+/* =========================================
+   RESPONSIVE — tablet (max 840px)
+   - single column layouts
+   - smaller padding
+========================================= */
 @media (max-width: 840px) {
-  .dashboard-panel { padding: 24px; }
+  /* main panel gets less padding */
+  .dashboard-panel { padding: 20px 16px; }
+
+  /* header buttons stack below the title */
+  .header-top-row   { flex-direction: column; }
+  .header-btn-group { flex-direction: row; flex-wrap: wrap; margin-top: 0; }
+
+  /* injury columns go single column */
   .injury-grid { grid-template-columns: 1fr; }
+
+  /* comparison results go single column */
   .compare-results { grid-template-columns: 1fr; }
+
+  /* vehicle comparison form goes single column */
   .vehicle-columns:has(#col-compare:not([hidden])) { grid-template-columns: 1fr; }
+
+  /* result header stacks vertically */
+  .result-header { flex-direction: column; gap: 16px; }
+
+  /* metric cards full width */
+  .metric-group { width: 100%; grid-template-columns: 1fr 1fr; }
+
+  /* vehicle result row wraps */
+  .vehicle-result-row { gap: 16px; }
+
+  /* form card and results card less padding */
+  .form-card, .results-card { padding: 20px 16px; }
+}
+
+/* =========================================
+   RESPONSIVE — phone (max 480px)
+   - everything single column
+   - font sizes slightly smaller
+========================================= */
+@media (max-width: 480px) {
+  /* very small padding on the outer shell */
+  .page-shell { padding: 16px 10px; }
+
+  /* panel takes full width with small radius */
+  .dashboard-panel {
+    padding: 16px 12px;
+    border-radius: 18px;
+  }
+
+  /* heading font smaller on tiny screens */
+  h1 { font-size: 1.6rem; }
+
+  /* metric cards go full width single column */
+  .metric-group { grid-template-columns: 1fr; }
+
+  /* toggle switches stack vertically on very small screens */
+  .toggle-grid { grid-template-columns: 1fr; }
+
+  /* vehicle info row wraps and stacks */
+  .vehicle-info-row  { flex-wrap: wrap; gap: 14px; }
+  .vehicle-result-row { flex-direction: column; gap: 10px; }
+
+  /* compare button smaller */
+  .compare-btn { font-size: 0.78rem; padding: 7px 12px; }
+
+  /* form header row stacks */
+  .form-header-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  /* submit button bigger tap target */
+  .primary-button { padding: 18px; font-size: 1rem; }
+
+  /* feature tags wrap naturally */
+  .feature-tags { gap: 6px; }
 }
