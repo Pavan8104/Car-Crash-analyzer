@@ -656,8 +656,24 @@ li.injury-item {
   color: var(--muted);
 }
 
-.page-footer {
+.data-disclaimer {
   margin-top: 28px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(240, 182, 89, 0.07);
+  border: 1px solid rgba(240, 182, 89, 0.22);
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.data-disclaimer strong {
+  color: var(--warning);
+}
+
+.page-footer {
+  margin-top: 16px;
   color: var(--muted);
   font-size: 0.95rem;
   text-align: center;
