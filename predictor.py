@@ -3,12 +3,20 @@
 from typing import Dict, List
 
 
-def determine_risk_level(speed_kmh: float, collision_type: str, seatbelt: bool, airbags: bool) -> str:
+def determine_risk_level(
+    speed_kmh: float,
+    collision_type: str,
+    seatbelt: bool,
+    airbags: bool,
+    safety_bonus: int = 0,
+) -> str:
     score = 0
     score += 2 if speed_kmh >= 60 else 1 if speed_kmh >= 30 else 0
     score += 2 if collision_type == "side" else 1 if collision_type == "rollover" else 0
     score += 1 if not seatbelt else 0
     score += 1 if not airbags else 0
+    # vehicle safety systems (City Safety, BLIS, etc.) lower effective risk
+    score = max(0, score - safety_bonus)
 
     if score >= 5:
         return "High"
@@ -39,6 +47,7 @@ def format_report(payload: Dict) -> Dict:
             "impact_force_kN": payload["impact_force_kN"],
             "impact_energy_kJ": payload["impact_energy_kJ"],
         },
+        "vehicle": payload.get("vehicle", {}),
         "injuries": payload["injuries"],
         "safety_suggestions": payload["safety_suggestions"],
     }

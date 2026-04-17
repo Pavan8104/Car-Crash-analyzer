@@ -11,19 +11,50 @@
     <div class="dashboard-panel">
       <header class="panel-header">
         <div>
-          <p class="eyebrow">Sentinel AI Engineering</p>
+          <p class="eyebrow">Crash Analysis System</p>
           <h1>Crash Analysis Dashboard</h1>
-          <p class="description">Evaluate impact physics, injury risk, and safety recommendations with a modern, premium dashboard.</p>
+          <p class="description">Evaluate impact physics, injury risk, and safety recommendations. Select a Volvo model for vehicle-specific analysis.</p>
         </div>
       </header>
 
       <section class="form-card">
         <h2>Crash Input</h2>
         <form id="analysis-form">
+
+          <label for="vehicle_model">Vehicle Model</label>
+          <select name="vehicle_model" id="vehicle_model">
+            <option value="">Generic Vehicle</option>
+            <optgroup label="Volvo">
+              <option value="XC90">Volvo XC90</option>
+              <option value="XC60">Volvo XC60</option>
+              <option value="XC40">Volvo XC40</option>
+              <option value="S90">Volvo S90</option>
+              <option value="S60">Volvo S60</option>
+              <option value="V60">Volvo V60</option>
+              <option value="EX90">Volvo EX90 (Electric)</option>
+              <option value="C40">Volvo C40</option>
+            </optgroup>
+          </select>
+
+          <div id="vehicle-info-card" class="vehicle-info-card" hidden>
+            <div class="vehicle-info-row">
+              <div class="vehicle-stat">
+                <span class="vehicle-stat-label">Mass</span>
+                <strong id="vi-mass">—</strong>
+              </div>
+              <div class="vehicle-stat">
+                <span class="vehicle-stat-label">NCAP</span>
+                <strong id="vi-ncap">—</strong>
+              </div>
+            </div>
+            <div class="vehicle-features-label">Safety Systems</div>
+            <ul id="vi-features" class="vehicle-features-list"></ul>
+          </div>
+
           <label for="speed">Speed (km/h)</label>
           <div class="slider-row">
             <input type="range" id="speed" name="speed" min="0" max="200" value="50" />
-            <span id="speed-value">50</span>
+            <span id="speed-value">50 km/h</span>
           </div>
 
           <label for="collision">Collision Type</label>
@@ -40,7 +71,6 @@
               <input type="checkbox" id="seatbelt" name="seatbelt" checked />
               <span class="slider"></span>
             </label>
-
             <label class="toggle-label">
               <span>Airbags</span>
               <input type="checkbox" id="airbags" name="airbags" checked />
@@ -69,6 +99,25 @@
               <strong id="impact-energy">0 kJ</strong>
             </div>
           </div>
+        </div>
+
+        <div id="vehicle-result-block" class="section-block" hidden>
+          <h3>Vehicle Safety Profile</h3>
+          <div class="vehicle-result-row">
+            <div class="vehicle-result-stat">
+              <span>Model</span>
+              <strong id="res-model">—</strong>
+            </div>
+            <div class="vehicle-result-stat">
+              <span>Mass</span>
+              <strong id="res-mass">—</strong>
+            </div>
+            <div class="vehicle-result-stat">
+              <span>NCAP Rating</span>
+              <strong id="res-ncap">—</strong>
+            </div>
+          </div>
+          <div class="feature-tags" id="res-features"></div>
         </div>
 
         <div class="section-block">
@@ -102,22 +151,50 @@
   </div>
 
   <script>
-    const form = document.getElementById('analysis-form');
-    const submitBtn = document.getElementById('submit-btn');
-    const errorMsg = document.getElementById('error-msg');
-    const speedTrack = document.getElementById('speed');
-    const speedValue = document.getElementById('speed-value');
-    const resultsCard = document.getElementById('results-card');
-    const riskLevel = document.getElementById('risk-level');
-    const impactForce = document.getElementById('impact-force');
-    const impactEnergy = document.getElementById('impact-energy');
-    const severeList = document.getElementById('severe-list');
-    const moderateList = document.getElementById('moderate-list');
-    const minorList = document.getElementById('minor-list');
+    const VOLVO_DATA = {
+      "XC90":  { mass: 2100, ncap: 5, features: ["City Safety","BLIS","Pilot Assist","Run-off Road Protection","Cross Traffic Alert"] },
+      "XC60":  { mass: 1950, ncap: 5, features: ["City Safety","BLIS","Pilot Assist","Oncoming Lane Mitigation","Cross Traffic Alert"] },
+      "XC40":  { mass: 1725, ncap: 5, features: ["City Safety","BLIS","Run-off Road Protection","Cross Traffic Alert"] },
+      "S90":   { mass: 1850, ncap: 5, features: ["City Safety","BLIS","Pilot Assist","Large Animal Detection","Cross Traffic Alert"] },
+      "S60":   { mass: 1590, ncap: 5, features: ["City Safety","BLIS","Pilot Assist","Lane Keeping Aid"] },
+      "V60":   { mass: 1650, ncap: 5, features: ["City Safety","BLIS","Lane Keeping Aid","Cross Traffic Alert"] },
+      "EX90":  { mass: 2736, ncap: 5, features: ["City Safety","BLIS","Pilot Assist","360-degree Radar","Driver Understanding System","Cross Traffic Alert"] },
+      "C40":   { mass: 1800, ncap: 5, features: ["City Safety","BLIS","Cross Traffic Alert","Lane Keeping Aid"] },
+    };
+
+    const form           = document.getElementById('analysis-form');
+    const submitBtn      = document.getElementById('submit-btn');
+    const errorMsg       = document.getElementById('error-msg');
+    const speedTrack     = document.getElementById('speed');
+    const speedDisplay   = document.getElementById('speed-value');
+    const vehicleSelect  = document.getElementById('vehicle_model');
+    const vehicleInfoCard = document.getElementById('vehicle-info-card');
+    const resultsCard    = document.getElementById('results-card');
+    const riskLevel      = document.getElementById('risk-level');
+    const impactForce    = document.getElementById('impact-force');
+    const impactEnergy   = document.getElementById('impact-energy');
+    const severeList     = document.getElementById('severe-list');
+    const moderateList   = document.getElementById('moderate-list');
+    const minorList      = document.getElementById('minor-list');
     const suggestionsList = document.getElementById('suggestions-list');
+    const vehicleResultBlock = document.getElementById('vehicle-result-block');
 
     speedTrack.addEventListener('input', () => {
-      speedValue.textContent = speedTrack.value;
+      speedDisplay.textContent = speedTrack.value + ' km/h';
+    });
+
+    vehicleSelect.addEventListener('change', () => {
+      const model = vehicleSelect.value;
+      const data = VOLVO_DATA[model];
+      if (!data) {
+        vehicleInfoCard.hidden = true;
+        return;
+      }
+      document.getElementById('vi-mass').textContent = data.mass + ' kg';
+      document.getElementById('vi-ncap').textContent = '★'.repeat(data.ncap);
+      const featList = document.getElementById('vi-features');
+      featList.innerHTML = data.features.map(f => `<li>${f}</li>`).join('');
+      vehicleInfoCard.hidden = false;
     });
 
     function showError(msg) {
@@ -130,9 +207,9 @@
       errorMsg.textContent = '';
     }
 
-    const fillList = (element, items) => {
-      element.innerHTML = items.length
-        ? items.map(item => `<li>${item}</li>`).join('')
+    const fillList = (el, items) => {
+      el.innerHTML = items.length
+        ? items.map(i => `<li>${i}</li>`).join('')
         : '<li class="empty">None</li>';
     };
 
@@ -148,6 +225,7 @@
       payload.append('collision', formData.get('collision'));
       payload.append('seatbelt', formData.get('seatbelt') ? 'true' : 'false');
       payload.append('airbags', formData.get('airbags') ? 'true' : 'false');
+      payload.append('vehicle_model', formData.get('vehicle_model') || '');
 
       try {
         const response = await fetch('/analyze', { method: 'POST', body: payload });
@@ -164,6 +242,17 @@
         riskLevel.className = `risk-badge risk-${data.summary.risk_level.toLowerCase()}`;
         impactForce.textContent = `${data.summary.impact_force_kN} kN`;
         impactEnergy.textContent = `${data.summary.impact_energy_kJ} kJ`;
+
+        const v = data.vehicle;
+        if (v && v.model !== 'Generic') {
+          document.getElementById('res-model').textContent = 'Volvo ' + v.model;
+          document.getElementById('res-mass').textContent = v.mass_kg + ' kg';
+          document.getElementById('res-ncap').textContent = v.ncap_stars ? '★'.repeat(v.ncap_stars) : '—';
+          document.getElementById('res-features').innerHTML = (v.features || []).map(f => `<span class="feature-tag">${f}</span>`).join('');
+          vehicleResultBlock.hidden = false;
+        } else {
+          vehicleResultBlock.hidden = true;
+        }
 
         fillList(severeList, data.injuries.Severe || []);
         fillList(moderateList, data.injuries.Moderate || []);

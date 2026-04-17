@@ -5,15 +5,23 @@ import logging
 from physics import summarize_physics
 from predictor import determine_risk_level, safety_suggestions, format_report
 from injury_model import generate_injury_scenarios
+from vehicle_data import get_vehicle, VOLVO_MODELS
 from utils import validate_inputs, print_report, logger
 
 
-def analyze_crash(speed_kmh: float, collision_type: str, seatbelt: bool, airbags: bool) -> dict:
+def analyze_crash(
+    speed_kmh: float,
+    collision_type: str,
+    seatbelt: bool,
+    airbags: bool,
+    vehicle_model: str = "",
+) -> dict:
     validate_inputs(speed_kmh, collision_type, seatbelt, airbags)
     logger.info("Starting crash analysis")
 
-    physics = summarize_physics(speed_kmh, collision_type)
-    risk_level = determine_risk_level(speed_kmh, collision_type, seatbelt, airbags)
+    vehicle = get_vehicle(vehicle_model)
+    physics = summarize_physics(speed_kmh, collision_type, vehicle["mass_kg"], vehicle["crumple_time_s"])
+    risk_level = determine_risk_level(speed_kmh, collision_type, seatbelt, airbags, vehicle["safety_bonus"])
     injuries = generate_injury_scenarios(speed_kmh, collision_type, seatbelt, airbags, risk_level)
     suggestions = safety_suggestions(risk_level, seatbelt, airbags)
 
@@ -27,6 +35,12 @@ def analyze_crash(speed_kmh: float, collision_type: str, seatbelt: bool, airbags
         "risk_level": risk_level,
         "injuries": injuries,
         "safety_suggestions": suggestions,
+        "vehicle": {
+            "model": vehicle_model or "Generic",
+            "mass_kg": vehicle["mass_kg"],
+            "ncap_stars": vehicle["ncap_stars"],
+            "features": vehicle["features"],
+        },
     }
     logger.info("Crash analysis complete")
     return format_report(report)

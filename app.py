@@ -20,9 +20,10 @@ def analyze():
         collision_type = request.form.get("collision", "frontal")
         seatbelt = request.form.get("seatbelt", "false") == "true"
         airbags = request.form.get("airbags", "false") == "true"
+        vehicle_model = request.form.get("vehicle_model", "")
 
         validate_inputs(speed, collision_type, seatbelt, airbags)
-        report = run_analysis(speed, collision_type, seatbelt, airbags)
+        report = run_analysis(speed, collision_type, seatbelt, airbags, vehicle_model)
         return jsonify({"success": True, "data": report})
     except ValueError as exc:
         return jsonify({"success": False, "error": str(exc)}), 400

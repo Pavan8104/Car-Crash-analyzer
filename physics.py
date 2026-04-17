@@ -1,9 +1,7 @@
-"""Crash physics calculations for a collision analysis system."""
-
 from typing import Dict
 
-# Typical average vehicle mass used for impact calculations (kg)
-DEFAULT_VEHICLE_MASS_KG = 1500
+DEFAULT_MASS_KG = 1500
+DEFAULT_CRUMPLE_TIME_S = 0.10
 
 COLLISION_FORCE_MULTIPLIER = {
     "frontal": 1.0,
@@ -20,27 +18,37 @@ COLLISION_ENERGY_MULTIPLIER = {
 }
 
 
-def calculate_impact_force(speed_kmh: float, collision_type: str, mass_kg: float = DEFAULT_VEHICLE_MASS_KG) -> float:
-    """Estimate impact force in kilonewtons based on speed and collision type."""
+def calculate_impact_force(
+    speed_kmh: float,
+    collision_type: str,
+    mass_kg: float = DEFAULT_MASS_KG,
+    crumple_time_s: float = DEFAULT_CRUMPLE_TIME_S,
+) -> float:
     speed_m_s = speed_kmh / 3.6
-    base_force = mass_kg * speed_m_s / 0.1
+    # longer crumple time = force spread over more time = lower peak force
+    base_force = mass_kg * speed_m_s / crumple_time_s
     multiplier = COLLISION_FORCE_MULTIPLIER.get(collision_type, 1.0)
-    force_newtons = base_force * multiplier
-    return round(force_newtons / 1000, 1)
+    return round((base_force * multiplier) / 1000, 1)
 
 
-def calculate_impact_energy(speed_kmh: float, collision_type: str, mass_kg: float = DEFAULT_VEHICLE_MASS_KG) -> float:
-    """Estimate kinetic energy in kilojoules based on speed and collision type."""
+def calculate_impact_energy(
+    speed_kmh: float,
+    collision_type: str,
+    mass_kg: float = DEFAULT_MASS_KG,
+) -> float:
     speed_m_s = speed_kmh / 3.6
-    energy_joules = 0.5 * mass_kg * (speed_m_s ** 2)
+    energy_j = 0.5 * mass_kg * (speed_m_s ** 2)
     multiplier = COLLISION_ENERGY_MULTIPLIER.get(collision_type, 1.0)
-    energy_joules *= multiplier
-    return round(energy_joules / 1000, 1)
+    return round((energy_j * multiplier) / 1000, 1)
 
 
-def summarize_physics(speed_kmh: float, collision_type: str) -> Dict[str, float]:
-    """Return a dictionary with calculated impact metrics."""
+def summarize_physics(
+    speed_kmh: float,
+    collision_type: str,
+    mass_kg: float = DEFAULT_MASS_KG,
+    crumple_time_s: float = DEFAULT_CRUMPLE_TIME_S,
+) -> Dict[str, float]:
     return {
-        "impact_force_kN": calculate_impact_force(speed_kmh, collision_type),
-        "impact_energy_kJ": calculate_impact_energy(speed_kmh, collision_type),
+        "impact_force_kN": calculate_impact_force(speed_kmh, collision_type, mass_kg, crumple_time_s),
+        "impact_energy_kJ": calculate_impact_energy(speed_kmh, collision_type, mass_kg),
     }
