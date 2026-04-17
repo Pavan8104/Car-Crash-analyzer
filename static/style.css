@@ -93,9 +93,14 @@ label {
 }
 
 .slider-row {
-  display: grid;
-  gap: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
   margin-bottom: 24px;
+}
+
+.slider-row input[type="range"] {
+  flex: 1;
 }
 
 input[type="range"] {
