@@ -20,13 +20,13 @@
       <section class="form-card">
         <h2>Crash Input</h2>
         <form id="analysis-form">
-          <label>Speed (km/h)</label>
+          <label for="speed">Speed (km/h)</label>
           <div class="slider-row">
             <input type="range" id="speed" name="speed" min="0" max="200" value="50" />
             <span id="speed-value">50</span>
           </div>
 
-          <label>Collision Type</label>
+          <label for="collision">Collision Type</label>
           <select name="collision" id="collision">
             <option value="frontal">Frontal</option>
             <option value="rear">Rear</option>
@@ -74,15 +74,15 @@
         <div class="section-block">
           <h3>Injury Scenarios</h3>
           <div class="injury-grid">
-            <div>
+            <div class="injury-col injury-col-severe">
               <p class="subheading subheading-severe">Severe</p>
               <ul id="severe-list"></ul>
             </div>
-            <div>
+            <div class="injury-col injury-col-moderate">
               <p class="subheading subheading-moderate">Moderate</p>
               <ul id="moderate-list"></ul>
             </div>
-            <div>
+            <div class="injury-col injury-col-minor">
               <p class="subheading subheading-minor">Minor</p>
               <ul id="minor-list"></ul>
             </div>

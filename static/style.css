@@ -110,6 +110,9 @@ input[type="range"] {
 #speed-value {
   color: var(--accent);
   font-weight: 700;
+  min-width: 60px;
+  text-align: right;
+  font-size: 0.95rem;
 }
 
 select,
@@ -264,6 +267,18 @@ select {
   gap: 18px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+
+.injury-col {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left-width: 3px;
+}
+
+.injury-col-severe  { border-left-color: var(--danger); }
+.injury-col-moderate { border-left-color: var(--warning); }
+.injury-col-minor   { border-left-color: var(--success); }
 
 .subheading {
   margin: 0 0 8px;
