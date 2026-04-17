@@ -6,8 +6,11 @@ from config import HEALTH_WEIGHTS, SPEED_HIGH
 # score 0-100, higher = healthier / safer
 
 
-def _score_ncap(stars: int) -> float:
+def _score_ncap(stars) -> float:
     # 5 stars = perfect, 0 stars = very unsafe
+    # None means no rating available — treat as average (3 stars)
+    if stars is None:
+        stars = 3
     return (stars / 5) * 100
 
 
