@@ -3,6 +3,7 @@ from physics import summarize_physics
 from predictor import determine_risk_level, safety_suggestions, format_report
 from injury_model import generate_injury_scenarios
 from vehicle_data import get_vehicle, VOLVO_MODELS
+from health_monitor import calculate_health_score
 from utils import validate_inputs, print_report, logger
 
 
@@ -50,6 +51,16 @@ def analyze_crash(
             "This scenario is outside Volvo's recommended safety envelope."
         )
 
+    # calculate vehicle health score
+    health = calculate_health_score(
+        ncap_stars=vehicle["ncap_stars"],
+        seatbelt=seatbelt,
+        airbags=airbags,
+        speed_kmh=speed_kmh,
+        crumple_time_s=vehicle["crumple_time_s"],
+        care_key_limit=vehicle["care_key_speed_limit"],
+    )
+
     report = {
         "speed_kmh": speed_kmh,
         "collision_type": collision_type,
@@ -57,10 +68,14 @@ def analyze_crash(
         "airbags": airbags,
         "impact_force_kN": physics["impact_force_kN"],
         "impact_energy_kJ": physics["impact_energy_kJ"],
+        "gforce": physics["gforce"],
+        "gforce_label": physics["gforce_label"],
+        "stopping_distance_m": physics["stopping_distance_m"],
         "risk_level": risk_level,
         "injuries": injuries,
         "safety_suggestions": suggestions,
         "warnings": warnings,
+        "health": health,
         "vehicle": {
             "model": vehicle_model or "Generic",
             "generation": generation,

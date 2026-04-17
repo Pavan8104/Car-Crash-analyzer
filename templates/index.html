@@ -184,6 +184,14 @@
                 <span>Impact Energy</span>
                 <strong id="impact-energy">—</strong>
               </div>
+              <div class="metric-card">
+                <span>Peak G-Force</span>
+                <strong id="impact-gforce">—</strong>
+              </div>
+              <div class="metric-card">
+                <span>Stopping Distance</span>
+                <strong id="impact-stop">—</strong>
+              </div>
             </div>
           </div>
           <div id="vehicle-result-block" class="section-block" hidden>
@@ -195,6 +203,21 @@
               <div class="vehicle-result-stat"><span>NCAP</span><strong id="res-ncap">—</strong></div>
             </div>
             <div class="feature-tags" id="res-features"></div>
+
+            <!-- health score strip -->
+            <div class="health-score-row" id="health-score-row">
+              <div class="health-score-left">
+                <span class="health-label-text">Vehicle Health Score</span>
+                <span class="health-badge" id="health-badge">—</span>
+              </div>
+              <div class="health-bar-wrap">
+                <div class="health-bar-track">
+                  <div class="health-bar-fill" id="health-bar-fill" style="width:0%"></div>
+                </div>
+                <span class="health-score-num" id="health-score-num">—</span>
+              </div>
+            </div>
+            <div id="health-alerts-list"></div>
           </div>
           <div class="section-block">
             <h3>Injury Scenarios</h3>
@@ -395,10 +418,14 @@
         warnBlock.hidden = true;
       }
 
-      document.getElementById('risk-level').textContent = data.summary.risk_level;
-      document.getElementById('risk-level').className = `risk-badge risk-${data.summary.risk_level.toLowerCase()}`;
+      document.getElementById('risk-level').textContent   = data.summary.risk_level;
+      document.getElementById('risk-level').className     = `risk-badge risk-${data.summary.risk_level.toLowerCase()}`;
       document.getElementById('impact-force').textContent  = `${data.summary.impact_force_kN} kN`;
       document.getElementById('impact-energy').textContent = `${data.summary.impact_energy_kJ} kJ`;
+      document.getElementById('impact-gforce').textContent = data.summary.gforce
+        ? `${data.summary.gforce}g — ${data.summary.gforce_label}` : '—';
+      document.getElementById('impact-stop').textContent   = data.summary.stopping_distance_m
+        ? `${data.summary.stopping_distance_m} m` : '—';
 
       const v = data.vehicle;
       const vBlock = document.getElementById('vehicle-result-block');
@@ -411,6 +438,20 @@
         vBlock.hidden = false;
       } else {
         vBlock.hidden = true;
+      }
+
+      // health score
+      const h = data.health;
+      if (h && h.overall !== undefined) {
+        document.getElementById('health-badge').textContent  = h.label;
+        document.getElementById('health-badge').className    = `health-badge health-${h.color}`;
+        document.getElementById('health-score-num').textContent = `${h.overall} / 100`;
+        document.getElementById('health-bar-fill').style.width = `${h.overall}%`;
+        document.getElementById('health-bar-fill').className   = `health-bar-fill health-fill-${h.color}`;
+        const alertsEl = document.getElementById('health-alerts-list');
+        alertsEl.innerHTML = (h.alerts || []).map(a =>
+          `<div class="health-alert-item">${a}</div>`
+        ).join('');
       }
 
       fillList(document.getElementById('severe-list'),   data.injuries.Severe   || [], 'severe-count');

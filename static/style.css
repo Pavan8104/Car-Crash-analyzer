@@ -196,7 +196,7 @@ select {
   padding: 16px 18px;
   border: none;
   border-radius: 16px;
-  background: linear-gradient(135deg, #5b8def, #3fa2ff);
+  background: linear-gradient(135deg, #3d6ed4, #1f8ae0);
   color: white;
   font-size: 1rem;
   font-weight: 700;
@@ -661,6 +661,83 @@ li.injury-item {
   color: var(--muted);
   font-size: 0.95rem;
   text-align: center;
+}
+
+/* ── health score strip ── */
+.health-score-row {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.health-score-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.health-label-text {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.health-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.health-good    { background: rgba(53,182,121,0.12); border: 1px solid rgba(53,182,121,0.3); color: var(--success); }
+.health-warning { background: rgba(240,182,89,0.12); border: 1px solid rgba(240,182,89,0.3); color: var(--warning); }
+.health-danger  { background: rgba(228,95,104,0.12); border: 1px solid rgba(228,95,104,0.3); color: var(--danger); }
+
+.health-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+}
+
+.health-bar-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+
+.health-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.health-fill-success { background: var(--success); }
+.health-fill-warning { background: var(--warning); }
+.health-fill-danger  { background: var(--danger); }
+
+.health-score-num {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.health-alert-item {
+  margin-top: 8px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: rgba(240,182,89,0.07);
+  border: 1px solid rgba(240,182,89,0.2);
+  color: var(--warning);
+  font-size: 0.78rem;
+  line-height: 1.55;
 }
 
 /* -- header row: title on left, buttons on right -- */

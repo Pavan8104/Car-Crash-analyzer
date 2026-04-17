@@ -9,10 +9,21 @@ def determine_risk_level(
     safety_bonus: int = 0,
 ) -> str:
     score = 0
-    score += 2 if speed_kmh >= 60 else 1 if speed_kmh >= 30 else 0
-    score += 2 if collision_type == "side" else 1 if collision_type == "rollover" else 0
-    score += 1 if not seatbelt else 0
-    score += 1 if not airbags else 0
+
+    if speed_kmh >= 60:
+        score += 2
+    elif speed_kmh >= 30:
+        score += 1
+
+    if collision_type == "side":
+        score += 2
+    elif collision_type == "rollover":
+        score += 1
+
+    if not seatbelt:
+        score += 1
+    if not airbags:
+        score += 1
     score = max(0, score - safety_bonus)
 
     if score >= 5:
@@ -75,12 +86,18 @@ def safety_suggestions(
 def format_report(payload: Dict) -> Dict:
     return {
         "summary": {
-            "risk_level": payload["risk_level"],
-            "impact_force_kN": payload["impact_force_kN"],
-            "impact_energy_kJ": payload["impact_energy_kJ"],
+            "risk_level":         payload["risk_level"],
+            "impact_force_kN":    payload["impact_force_kN"],
+            "impact_energy_kJ":   payload["impact_energy_kJ"],
+            "gforce":             payload.get("gforce", 0),
+            "gforce_label":       payload.get("gforce_label", ""),
+            "stopping_distance_m":payload.get("stopping_distance_m", 0),
+            "speed_kmh":          payload.get("speed_kmh", 0),
+            "collision_type":     payload.get("collision_type", ""),
         },
-        "vehicle": payload.get("vehicle", {}),
-        "injuries": payload["injuries"],
-        "safety_suggestions": payload["safety_suggestions"],
-        "warnings": payload.get("warnings", []),
+        "vehicle":           payload.get("vehicle", {}),
+        "injuries":          payload["injuries"],
+        "safety_suggestions":payload["safety_suggestions"],
+        "warnings":          payload.get("warnings", []),
+        "health":            payload.get("health", {}),
     }
