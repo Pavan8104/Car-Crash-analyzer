@@ -48,7 +48,8 @@
             </label>
           </div>
 
-          <button type="submit" class="primary-button">Analyze Crash</button>
+          <button type="submit" class="primary-button" id="submit-btn">Analyze Crash</button>
+          <p id="error-msg" class="error-msg" hidden></p>
         </form>
       </section>
 
@@ -74,15 +75,15 @@
           <h3>Injury Scenarios</h3>
           <div class="injury-grid">
             <div>
-              <p class="subheading">Severe</p>
+              <p class="subheading subheading-severe">Severe</p>
               <ul id="severe-list"></ul>
             </div>
             <div>
-              <p class="subheading">Moderate</p>
+              <p class="subheading subheading-moderate">Moderate</p>
               <ul id="moderate-list"></ul>
             </div>
             <div>
-              <p class="subheading">Minor</p>
+              <p class="subheading subheading-minor">Minor</p>
               <ul id="minor-list"></ul>
             </div>
           </div>
@@ -102,6 +103,8 @@
 
   <script>
     const form = document.getElementById('analysis-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const errorMsg = document.getElementById('error-msg');
     const speedTrack = document.getElementById('speed');
     const speedValue = document.getElementById('speed-value');
     const resultsCard = document.getElementById('results-card');
@@ -117,48 +120,63 @@
       speedValue.textContent = speedTrack.value;
     });
 
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.hidden = false;
+    }
+
+    function clearError() {
+      errorMsg.hidden = true;
+      errorMsg.textContent = '';
+    }
+
+    const fillList = (element, items) => {
+      element.innerHTML = items.length
+        ? items.map(item => `<li>${item}</li>`).join('')
+        : '<li class="empty">None</li>';
+    };
+
     form.addEventListener('submit', async event => {
       event.preventDefault();
+      clearError();
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Analyzing...';
+
       const formData = new FormData(form);
       const payload = new URLSearchParams();
-
       payload.append('speed', formData.get('speed'));
       payload.append('collision', formData.get('collision'));
       payload.append('seatbelt', formData.get('seatbelt') ? 'true' : 'false');
       payload.append('airbags', formData.get('airbags') ? 'true' : 'false');
 
-      const response = await fetch('/analyze', {
-        method: 'POST',
-        body: payload
-      });
+      try {
+        const response = await fetch('/analyze', { method: 'POST', body: payload });
+        const result = await response.json();
 
-      if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || 'Unable to analyze crash at this time.');
-        return;
+        if (!result.success) {
+          showError(result.error || 'Unable to analyze crash.');
+          return;
+        }
+
+        const data = result.data;
+        resultsCard.hidden = false;
+        riskLevel.textContent = data.summary.risk_level;
+        riskLevel.className = `risk-badge risk-${data.summary.risk_level.toLowerCase()}`;
+        impactForce.textContent = `${data.summary.impact_force_kN} kN`;
+        impactEnergy.textContent = `${data.summary.impact_energy_kJ} kJ`;
+
+        fillList(severeList, data.injuries.Severe || []);
+        fillList(moderateList, data.injuries.Moderate || []);
+        fillList(minorList, data.injuries.Minor || []);
+        fillList(suggestionsList, data.safety_suggestions || []);
+
+        resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        showError('Network error. Is the server running?');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Analyze Crash';
       }
-
-      const result = await response.json();
-      if (!result.success) {
-        alert(result.error || 'Unable to analyze crash.');
-        return;
-      }
-
-      const data = result.data;
-      resultsCard.hidden = false;
-      riskLevel.textContent = data.summary.risk_level;
-      riskLevel.className = `risk-badge risk-${data.summary.risk_level.toLowerCase()}`;
-      impactForce.textContent = `${data.summary.impact_force_kN} kN`;
-      impactEnergy.textContent = `${data.summary.impact_energy_kJ} kJ`;
-
-      const fillList = (element, items) => {
-        element.innerHTML = items.length ? items.map(item => `<li>${item}</li>`).join('') : '<li class="empty">No items</li>';
-      };
-
-      fillList(severeList, data.injuries.Severe || []);
-      fillList(moderateList, data.injuries.Moderate || []);
-      fillList(minorList, data.injuries.Minor || []);
-      fillList(suggestionsList, data.safety_suggestions || []);
     });
   </script>
 </body>
