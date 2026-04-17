@@ -1,5 +1,6 @@
 """Flask application for the Crash Analysis & Injury Prediction System."""
 
+import os
 from flask import Flask, render_template, request, jsonify
 from main import run_analysis
 from utils import validate_inputs
@@ -35,4 +36,4 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=os.getenv("FLASK_DEBUG", "0") == "1")

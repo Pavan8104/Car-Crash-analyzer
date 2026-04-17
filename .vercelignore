@@ -1,0 +1,14 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+.claude/
+requirements-dev.txt
+streamlit_app.py
+cli_example.txt
+FUTURE_IMPROVEMENTS.md
+README.md
+Dockerfile
+Procfile
