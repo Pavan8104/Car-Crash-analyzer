@@ -21,15 +21,13 @@ def _collision_injury_tokens(collision_type: str) -> List[str]:
     return mapping.get(collision_type, ["soft tissue injury"])
 
 
-def generate_injury_scenarios(speed_kmh: float, collision_type: str, seatbelt: bool, airbags: bool) -> Dict[str, List[str]]:
-    """Return categorized injury scenarios based on the crash profile."""
+def generate_injury_scenarios(speed_kmh: float, collision_type: str, seatbelt: bool, airbags: bool, risk_level: str = "Low") -> Dict[str, List[str]]:
     injuries = {
         "Minor": [],
         "Moderate": [],
         "Severe": [],
     }
     collision_tokens = _collision_injury_tokens(collision_type)
-    risk_factor = int(speed_kmh / 30) + _seatbelt_modifier(seatbelt) + _airbag_modifier(airbags)
 
     if speed_kmh <= 30:
         injuries["Minor"] = [collision_tokens[0], "bruising", "minor lacerations"]
@@ -56,6 +54,13 @@ def generate_injury_scenarios(speed_kmh: float, collision_type: str, seatbelt: b
         injuries["Moderate"].append("whiplash")
     if collision_type == "rollover" and not airbags:
         injuries["Severe"].append("roof intrusion injury")
+
+    # cap severity so injury output matches risk level
+    if risk_level == "Low":
+        injuries["Severe"] = []
+        injuries["Moderate"] = injuries["Moderate"][:1]
+    elif risk_level == "Medium":
+        injuries["Severe"] = injuries["Severe"][:1]
 
     for severity in injuries:
         injuries[severity] = list(dict.fromkeys(injuries[severity]))

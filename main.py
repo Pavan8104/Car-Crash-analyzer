@@ -14,7 +14,7 @@ def analyze_crash(speed_kmh: float, collision_type: str, seatbelt: bool, airbags
 
     physics = summarize_physics(speed_kmh, collision_type)
     risk_level = determine_risk_level(speed_kmh, collision_type, seatbelt, airbags)
-    injuries = generate_injury_scenarios(speed_kmh, collision_type, seatbelt, airbags)
+    injuries = generate_injury_scenarios(speed_kmh, collision_type, seatbelt, airbags, risk_level)
     suggestions = safety_suggestions(risk_level, seatbelt, airbags)
 
     report = {
