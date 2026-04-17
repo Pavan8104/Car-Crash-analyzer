@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Vision — Crash Analysis</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+
+    /* -- back button at the top -- */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .back-btn {
+      font-size: 0.85rem;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(91, 141, 239, 0.3);
+      background: rgba(91, 141, 239, 0.06);
+      transition: background 0.2s;
+    }
+
+    .back-btn:hover {
+      background: rgba(91, 141, 239, 0.14);
+    }
+
+    /* -- each section is wrapped in a card -- */
+    .v-section {
+      margin-top: 28px;
+      padding: 26px 28px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .v-section h2 {
+      margin: 0 0 6px;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    /* -- small label above section title -- */
+    .v-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    /* -- grey intro text under title -- */
+    .v-desc {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.7;
+      margin: 0 0 20px;
+      max-width: 680px;
+    }
+
+    /* =============================================
+       SECTION 1 — architecture flow boxes
+       boxes connected by arrows left to right
+    ============================================= */
+
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    /* one box in the flow */
+    .flow-box {
+      min-width: 120px;
+      padding: 16px 12px;
+      text-align: center;
+      border-radius: 16px;
+      background: rgba(91, 141, 239, 0.07);
+      border: 1px solid rgba(91, 141, 239, 0.2);
+      flex-shrink: 0;
+    }
+
+    .flow-box .fb-icon {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .flow-box .fb-name {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .flow-box .fb-note {
+      font-size: 0.7rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* arrow between boxes */
+    .flow-arrow {
+      padding: 0 8px;
+      color: var(--muted);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    /* =============================================
+       SECTION 2 — sensor list
+    ============================================= */
+
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .sensor-card {
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .sensor-card .sc-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .sensor-card .sc-desc {
+      font-size: 0.77rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* green = already in the car, blue = small add-on needed */
+    .sc-tag {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 0.67rem;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sc-existing {
+      background: rgba(53, 182, 121, 0.1);
+      border: 1px solid rgba(53, 182, 121, 0.25);
+      color: var(--success);
+    }
+
+    .sc-addon {
+      background: rgba(91, 141, 239, 0.1);
+      border: 1px solid rgba(91, 141, 239, 0.25);
+      color: var(--accent);
+    }
+
+    /* =============================================
+       SECTION 3 — alert recipient cards
+    ============================================= */
+
+    .recipient-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 14px;
+    }
+
+    .rc-card {
+      padding: 18px 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .rc-card .rc-icon { font-size: 1.5rem; }
+
+    .rc-card .rc-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .rc-card .rc-data,
+    .rc-card .rc-why {
+      font-size: 0.77rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* channel pill at the bottom of each card */
+    .ch-pill {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .ch-4g        { background: rgba(53,182,121,0.1); border:1px solid rgba(53,182,121,0.25); color: var(--success); }
+    .ch-sms       { background: rgba(240,182,89,0.1); border:1px solid rgba(240,182,89,0.25); color: var(--warning); }
+    .ch-satellite { background: rgba(91,141,239,0.1); border:1px solid rgba(91,141,239,0.25); color: var(--accent); }
+
+    /* =============================================
+       SECTION 4 — encryption steps (numbered list)
+    ============================================= */
+
+    .enc-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .enc-step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* circle with step number */
+    .enc-num {
+      min-width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(91, 141, 239, 0.13);
+      border: 1px solid rgba(91, 141, 239, 0.3);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .enc-text .et-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .enc-text .et-desc {
+      font-size: 0.77rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* =============================================
+       SECTION 5 — vehicle health items
+    ============================================= */
+
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    .hc {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .hc .hc-name {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .hc .hc-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* =============================================
+       SECTION 6 — roadmap phases
+    ============================================= */
+
+    .roadmap-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .rm-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .phase-tag {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .ph1 { background:rgba(53,182,121,0.1); border:1px solid rgba(53,182,121,0.25); color:var(--success); }
+    .ph2 { background:rgba(91,141,239,0.1); border:1px solid rgba(91,141,239,0.25); color:var(--accent); }
+    .ph3 { background:rgba(240,182,89,0.1); border:1px solid rgba(240,182,89,0.25); color:var(--warning); }
+    .ph4 { background:rgba(228,95,104,0.1); border:1px solid rgba(228,95,104,0.25); color:var(--danger); }
+
+    .rm-body .rm-title {
+      font-size: 0.87rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .rm-body .rm-desc {
+      font-size: 0.77rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* -- small disclaimer box at the bottom -- */
+    .disclaimer-box {
+      margin-top: 32px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.7;
+    }
+
+    /* mobile: stack flow boxes vertically */
+    @media (max-width: 700px) {
+      .flow-row    { flex-direction: column; align-items: stretch; }
+      .flow-arrow  { transform: rotate(90deg); align-self: center; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <div class="dashboard-panel">
+
+      <!-- page header -->
+      <div class="top-bar">
+        <div>
+          <p class="eyebrow">Educational Concept</p>
+          <h1>Integrated Vehicle Safety System</h1>
+          <p class="description">
+            A future idea — how this crash analysis software could be connected to real car sensors
+            to detect crashes, predict injuries, and automatically alert the right people.
+            Built as an educational concept demo.
+          </p>
+        </div>
+        <a href="/" class="back-btn">← Back to Dashboard</a>
+      </div>
+
+
+      <!-- ============================================
+           SECTION 1 — System Architecture
+           shows the full data flow in simple steps
+      ============================================= -->
+      <div class="v-section">
+        <p class="v-label">Section 1</p>
+        <h2>System Architecture</h2>
+        <p class="v-desc">
+          When a crash happens, data flows through these steps — from sensors inside the car
+          all the way to emergency services. Everything happens in a few seconds.
+        </p>
+
+        <div class="flow-row">
+
+          <div class="flow-box">
+            <span class="fb-icon">🚗</span>
+            <span class="fb-name">Sensors</span>
+            <span class="fb-note">IMU, cameras,<br>ultrasonic, GPS</span>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="flow-box">
+            <span class="fb-icon">⚙️</span>
+            <span class="fb-name">Edge Processor</span>
+            <span class="fb-note">small computer<br>inside the car</span>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="flow-box">
+            <span class="fb-icon">🧠</span>
+            <span class="fb-name">Analysis Engine</span>
+            <span class="fb-note">detects crash type,<br>speed, risk level</span>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="flow-box">
+            <span class="fb-icon">🔐</span>
+            <span class="fb-name">Encrypt Data</span>
+            <span class="fb-note">lock the data<br>before sending</span>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="flow-box">
+            <span class="fb-icon">📡</span>
+            <span class="fb-name">Transmit</span>
+            <span class="fb-note">4G or satellite<br>as backup</span>
+          </div>
+
+          <div class="flow-arrow">→</div>
+
+          <div class="flow-box">
+            <span class="fb-icon">🏥</span>
+            <span class="fb-name">Alert Recipients</span>
+            <span class="fb-note">hospital, police,<br>family, company</span>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- ============================================
+           SECTION 2 — Sensor Integration
+           which sensors are used and why
+      ============================================= -->
+      <div class="v-section">
+        <p class="v-label">Section 2</p>
+        <h2>Sensor Integration Layer</h2>
+        <p class="v-desc">
+          Most of these sensors are already inside modern cars.
+          No big hardware change is needed — just a small software connection.
+        </p>
+
+        <div class="sensor-grid">
+
+          <div class="sensor-card">
+            <div class="sc-name">Ultrasonic (Park Assist)</div>
+            <div class="sc-desc">
+              Already used for reversing. Can detect how close an obstacle is
+              and how fast the car is approaching it.
+            </div>
+            <span class="sc-tag sc-existing">Already in car</span>
+          </div>
+
+          <div class="sensor-card">
+            <div class="sc-name">IMU / Accelerometer</div>
+            <div class="sc-desc">
+              Measures sudden movement in all directions.
+              Main sensor that detects a crash happened.
+            </div>
+            <span class="sc-tag sc-existing">Already in car</span>
+          </div>
+
+          <div class="sensor-card">
+            <div class="sc-name">360° Camera</div>
+            <div class="sc-desc">
+              Helps identify which side the crash happened —
+              front, rear, side, or rollover.
+            </div>
+            <span class="sc-tag sc-existing">Already in car</span>
+          </div>
+
+          <div class="sensor-card">
+            <div class="sc-name">OBD-II / CAN Bus</div>
+            <div class="sc-desc">
+              Gives live data — speed, brake pressure, airbag status,
+              engine faults. Standard port in every modern car.
+            </div>
+            <span class="sc-tag sc-existing">Already in car</span>
+          </div>
+
+          <div class="sensor-card">
+            <div class="sc-name">GPS Module</div>
+            <div class="sc-desc">
+              Records exact crash location.
+              Sent to emergency services immediately.
+            </div>
+            <span class="sc-tag sc-existing">Already in car</span>
+          </div>
+
+          <div class="sensor-card">
+            <div class="sc-name">Seatbelt Sensors</div>
+            <div class="sc-desc">
+              Tells us which seats are occupied and if belts are fastened.
+              Used to improve injury prediction accuracy.
+            </div>
+            <span class="sc-tag sc-existing">Already in car</span>
+          </div>
+
+          <div class="sensor-card">
+            <div class="sc-name">Edge ECU Module</div>
+            <div class="sc-desc">
+              A small add-on chip (~$20–40) that connects all the sensors
+              together and runs the crash analysis firmware.
+            </div>
+            <span class="sc-tag sc-addon">Small add-on</span>
+          </div>
+
+          <div class="sensor-card">
+            <div class="sc-name">Cellular / Satellite Radio</div>
+            <div class="sc-desc">
+              4G SIM for normal areas. Satellite radio as backup
+              for tunnels or remote roads where there is no signal.
+            </div>
+            <span class="sc-tag sc-addon">Small add-on</span>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- ============================================
+           SECTION 3 — Emergency Alert Recipients
+           who gets alerted and what they receive
+      ============================================= -->
+      <div class="v-section">
+        <p class="v-label">Section 3</p>
+        <h2>Emergency Alert Recipients</h2>
+        <p class="v-desc">
+          When a crash is confirmed, four groups are notified at the same time.
+          Each group only gets the data they need — nothing extra.
+        </p>
+
+        <div class="recipient-grid">
+
+          <div class="rc-card">
+            <span class="rc-icon">🏥</span>
+            <div class="rc-name">Nearest Hospital</div>
+            <div class="rc-data"><strong>Gets:</strong> GPS location, predicted injury level, number of people in car, airbag status</div>
+            <div class="rc-why"><strong>Why:</strong> So the hospital can prepare trauma team before the ambulance arrives</div>
+            <span class="ch-pill ch-4g">4G / 5G</span>
+          </div>
+
+          <div class="rc-card">
+            <span class="rc-icon">🚔</span>
+            <div class="rc-name">Police / Emergency Services</div>
+            <div class="rc-data"><strong>Gets:</strong> Location, crash direction, number of people, EV or petrol car</div>
+            <div class="rc-why"><strong>Why:</strong> Faster dispatch, road block, and correct tools for EV fires</div>
+            <span class="ch-pill ch-4g">4G / 5G</span>
+          </div>
+
+          <div class="rc-card">
+            <span class="rc-icon">👤</span>
+            <div class="rc-name">Caretaker / Family</div>
+            <div class="rc-data"><strong>Gets:</strong> Short message — crash time, location link, risk level, which hospital</div>
+            <div class="rc-why"><strong>Why:</strong> Family knows immediately without waiting for a call</div>
+            <span class="ch-pill ch-sms">SMS + App</span>
+          </div>
+
+          <div class="rc-card">
+            <span class="rc-icon">🏭</span>
+            <div class="rc-name">Vehicle Manufacturer</div>
+            <div class="rc-data"><strong>Gets:</strong> Anonymised data — impact force, sensor readings, structural stress</div>
+            <div class="rc-why"><strong>Why:</strong> Company can detect product issues and improve future models</div>
+            <span class="ch-pill ch-satellite">Satellite</span>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- ============================================
+           SECTION 4 — Encryption Steps
+           how data is kept safe during sending
+      ============================================= -->
+      <div class="v-section">
+        <p class="v-label">Section 4</p>
+        <h2>Encrypted Transmission Protocol</h2>
+        <p class="v-desc">
+          Data is locked before leaving the car. Only the right person can unlock it.
+          Even if someone intercepts the signal, they cannot read anything.
+        </p>
+
+        <div class="enc-list">
+
+          <div class="enc-step">
+            <div class="enc-num">1</div>
+            <div class="enc-text">
+              <div class="et-title">Crash Confirmed</div>
+              <div class="et-desc">
+                The system only sends data if a real crash is detected above a safe threshold.
+                Small bumps and speed humps are ignored — no false alarms.
+              </div>
+            </div>
+          </div>
+
+          <div class="enc-step">
+            <div class="enc-num">2</div>
+            <div class="enc-text">
+              <div class="et-title">Data Prepared on Device</div>
+              <div class="et-desc">
+                A small packet (~2 KB) is built inside the car — GPS, speed, crash type,
+                airbag state, injury prediction. Nothing raw leaves the device.
+              </div>
+            </div>
+          </div>
+
+          <div class="enc-step">
+            <div class="enc-num">3</div>
+            <div class="enc-text">
+              <div class="et-title">AES-256 Encryption</div>
+              <div class="et-desc">
+                The data is locked using AES-256 — the same encryption used by banks.
+                Each recipient gets only their allowed part, locked with their own key.
+              </div>
+            </div>
+          </div>
+
+          <div class="enc-step">
+            <div class="enc-num">4</div>
+            <div class="enc-text">
+              <div class="et-title">Sent on Two Channels</div>
+              <div class="et-desc">
+                4G is tried first. If there is no signal, the satellite radio takes over.
+                This makes sure the alert always gets through, even in remote areas.
+              </div>
+            </div>
+          </div>
+
+          <div class="enc-step">
+            <div class="enc-num">5</div>
+            <div class="enc-text">
+              <div class="et-title">Recipient Decrypts and Reads</div>
+              <div class="et-desc">
+                The hospital, police, or family app uses their private key to unlock only
+                the data they are allowed to see. No one can see another person's data.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- ============================================
+           SECTION 5 — Vehicle Health Monitoring
+           what the system tracks about the car
+      ============================================= -->
+      <div class="v-section">
+        <p class="v-label">Section 5</p>
+        <h2>Vehicle Health Monitoring</h2>
+        <p class="v-desc">
+          Between crashes, the same sensors can monitor the car's condition.
+          Problems are flagged early before they become dangerous.
+        </p>
+
+        <div class="health-grid">
+
+          <div class="hc">
+            <div class="hc-name">Brake Condition</div>
+            <div class="hc-desc">
+              Tracks how long braking takes each time.
+              If it gets slower, pads may need replacement.
+            </div>
+          </div>
+
+          <div class="hc">
+            <div class="hc-name">Structural Damage</div>
+            <div class="hc-desc">
+              After any impact, sensors check if the car frame
+              has bent beyond safe limits.
+            </div>
+          </div>
+
+          <div class="hc">
+            <div class="hc-name">Airbag Readiness</div>
+            <div class="hc-desc">
+              Continuously checks all airbag circuits.
+              Alerts driver if one is not working properly.
+            </div>
+          </div>
+
+          <div class="hc">
+            <div class="hc-name">Battery Safety (EV)</div>
+            <div class="hc-desc">
+              Monitors battery temperature and cell health.
+              Warns of overheating before it becomes a fire risk.
+            </div>
+          </div>
+
+          <div class="hc">
+            <div class="hc-name">Sensor Health</div>
+            <div class="hc-desc">
+              Detects if any sensor has drifted out of calibration
+              due to temperature or physical damage.
+            </div>
+          </div>
+
+          <div class="hc">
+            <div class="hc-name">Crash History Log</div>
+            <div class="hc-desc">
+              Records every impact above a small threshold.
+              Useful for workshops and pre-sale car inspections.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- ============================================
+           SECTION 6 — Implementation Roadmap
+           how this idea would be built step by step
+      ============================================= -->
+      <div class="v-section">
+        <p class="v-label">Section 6</p>
+        <h2>Implementation Roadmap</h2>
+        <p class="v-desc">
+          This cannot be built all at once. It needs to go through
+          testing at each stage before moving to the next.
+        </p>
+
+        <div class="roadmap-list">
+
+          <div class="rm-row">
+            <span class="phase-tag ph1">Phase 1</span>
+            <div class="rm-body">
+              <div class="rm-title">Software Simulation (Current Stage)</div>
+              <div class="rm-desc">
+                Build and test the crash analysis engine in software.
+                Validate injury prediction against known crash data.
+                This is what the current project does.
+              </div>
+            </div>
+          </div>
+
+          <div class="rm-row">
+            <span class="phase-tag ph2">Phase 2</span>
+            <div class="rm-body">
+              <div class="rm-title">OBD-II Retrofit Prototype</div>
+              <div class="rm-desc">
+                Connect a small device to a real car's OBD-II port.
+                Read sensor data live. Test crash detection accuracy
+                on a closed course — no real roads yet.
+              </div>
+            </div>
+          </div>
+
+          <div class="rm-row">
+            <span class="phase-tag ph3">Phase 3</span>
+            <div class="rm-body">
+              <div class="rm-title">Alert System &amp; Encryption</div>
+              <div class="rm-desc">
+                Build the encrypted message pipeline.
+                Test with a hospital and local emergency services team
+                in a sandbox environment. Full security check done here.
+              </div>
+            </div>
+          </div>
+
+          <div class="rm-row">
+            <span class="phase-tag ph4">Phase 4</span>
+            <div class="rm-body">
+              <div class="rm-title">Real Vehicle Integration</div>
+              <div class="rm-desc">
+                Work with a car manufacturer to install the system
+                at the factory level. Get safety approvals.
+                Begin real-world testing with a small fleet.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- educational disclaimer at the bottom -->
+      <div class="disclaimer-box">
+        <strong>For Educational Purposes Only.</strong>
+        This page is a concept design created as part of a student project.
+        It is not a real deployed product. All ideas here are proposals to show
+        how existing car technology could be extended to improve emergency response.
+        Real deployment would need hardware testing, safety certification,
+        and legal/data protection approvals.
+      </div>
+
+      <div class="page-footer">
+        <p>Crash Analysis System — System Vision &amp; Future Integration Blueprint</p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

@@ -37,10 +37,15 @@ def analyze():
         return jsonify({"success": False, "error": "Internal server error."}), 500
 
 
+@app.route("/vision")
+def vision():
+    return render_template("vision.html")
+
+
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":
-    app.run(debug=os.getenv("FLASK_DEBUG", "0") == "1")
+    app.run(debug=os.getenv("FLASK_DEBUG", "0") == "1", port=int(os.getenv("PORT", 5001)))

@@ -11,10 +11,17 @@
     <div class="dashboard-panel">
 
       <header class="panel-header">
-        <div>
-          <p class="eyebrow">Crash Analysis System</p>
-          <h1>Crash Analysis Dashboard</h1>
-          <p class="description">Vehicle-specific crash analysis with Volvo safety system integration. Select a model and generation for accurate results.</p>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+          <div>
+            <p class="eyebrow">Crash Analysis System</p>
+            <h1>Crash Analysis Dashboard</h1>
+            <p class="description">Vehicle-specific crash analysis with Volvo safety system integration. Select a model and generation for accurate results.</p>
+          </div>
+          <a href="/vision" style="text-decoration:none; flex-shrink:0; margin-top:8px;">
+            <div style="padding:10px 16px; border-radius:14px; background:rgba(91,141,239,0.08); border:1px solid rgba(91,141,239,0.25); color:var(--accent); font-size:0.82rem; font-weight:600; white-space:nowrap;">
+              📡 System Vision
+            </div>
+          </a>
         </div>
       </header>
 
@@ -193,9 +200,27 @@
           <div class="section-block">
             <h3>Injury Scenarios</h3>
             <div class="injury-grid">
-              <div class="injury-col injury-col-severe"><p class="subheading subheading-severe">Severe</p><ul id="severe-list"></ul></div>
-              <div class="injury-col injury-col-moderate"><p class="subheading subheading-moderate">Moderate</p><ul id="moderate-list"></ul></div>
-              <div class="injury-col injury-col-minor"><p class="subheading subheading-minor">Minor</p><ul id="minor-list"></ul></div>
+              <div class="injury-col injury-col-severe">
+                <div class="injury-col-header">
+                  <p class="subheading subheading-severe">Severe</p>
+                  <span class="injury-count-badge" id="severe-count"></span>
+                </div>
+                <ul id="severe-list"></ul>
+              </div>
+              <div class="injury-col injury-col-moderate">
+                <div class="injury-col-header">
+                  <p class="subheading subheading-moderate">Moderate</p>
+                  <span class="injury-count-badge" id="moderate-count"></span>
+                </div>
+                <ul id="moderate-list"></ul>
+              </div>
+              <div class="injury-col injury-col-minor">
+                <div class="injury-col-header">
+                  <p class="subheading subheading-minor">Minor</p>
+                  <span class="injury-count-badge" id="minor-count"></span>
+                </div>
+                <ul id="minor-list"></ul>
+              </div>
             </div>
           </div>
           <div class="section-block">
@@ -320,10 +345,28 @@
     function showError(msg) { errorMsg.textContent = msg; errorMsg.hidden = false; }
     function clearError()   { errorMsg.hidden = true; errorMsg.textContent = ''; }
 
-    function fillList(el, items) {
-      el.innerHTML = items.length
-        ? items.map(i => `<li>${i}</li>`).join('')
-        : '<li class="empty">None</li>';
+    function fillList(el, items, countId) {
+      if (countId) {
+        const badge = document.getElementById(countId);
+        if (badge) badge.textContent = items && items.length ? items.length : '';
+      }
+      if (!items || !items.length) {
+        el.innerHTML = '<li class="empty">None</li>';
+        return;
+      }
+      el.innerHTML = items.map(item => {
+        if (typeof item === 'string') return `<li>${item}</li>`;
+        return `<li class="injury-item">
+          <div class="injury-main">
+            <span class="injury-name">${item.name}</span>
+            <span class="body-part-tag">${item.part}</span>
+          </div>
+          <div class="likelihood-row">
+            <div class="likelihood-track"><div class="likelihood-fill" style="width:${item.pct}%"></div></div>
+            <span class="likelihood-pct">${item.pct}%</span>
+          </div>
+        </li>`;
+      }).join('');
     }
 
     function buildPayload(overrides = {}) {
@@ -371,9 +414,9 @@
         vBlock.hidden = true;
       }
 
-      fillList(document.getElementById('severe-list'),   data.injuries.Severe   || []);
-      fillList(document.getElementById('moderate-list'), data.injuries.Moderate || []);
-      fillList(document.getElementById('minor-list'),    data.injuries.Minor    || []);
+      fillList(document.getElementById('severe-list'),   data.injuries.Severe   || [], 'severe-count');
+      fillList(document.getElementById('moderate-list'), data.injuries.Moderate || [], 'moderate-count');
+      fillList(document.getElementById('minor-list'),    data.injuries.Minor    || [], 'minor-count');
       fillList(document.getElementById('suggestions-list'), data.safety_suggestions || []);
     }
 
@@ -385,9 +428,19 @@
 
       const injHtml = ['Severe','Moderate','Minor'].map(sev => {
         const items = data.injuries[sev] || [];
-        return `<div class="injury-col injury-col-${sev.toLowerCase()}">
-          <p class="subheading subheading-${sev.toLowerCase()}">${sev}</p>
-          <ul>${items.length ? items.map(i=>`<li>${i}</li>`).join('') : '<li class="empty">None</li>'}</ul>
+        const sevLow = sev.toLowerCase();
+        const itemsHtml = items.length
+          ? items.map(i => typeof i === 'string'
+              ? `<li>${i}</li>`
+              : `<li class="injury-item">
+                  <div class="injury-main"><span class="injury-name">${i.name}</span><span class="body-part-tag">${i.part}</span></div>
+                  <div class="likelihood-row"><div class="likelihood-track"><div class="likelihood-fill" style="width:${i.pct}%"></div></div><span class="likelihood-pct">${i.pct}%</span></div>
+                </li>`).join('')
+          : '<li class="empty">None</li>';
+        const countBadge = items.length ? `<span class="injury-count-badge">${items.length}</span>` : '';
+        return `<div class="injury-col injury-col-${sevLow}">
+          <div class="injury-col-header"><p class="subheading subheading-${sevLow}">${sev}</p>${countBadge}</div>
+          <ul>${itemsHtml}</ul>
         </div>`;
       }).join('');
 

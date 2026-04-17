@@ -310,6 +310,97 @@ ul li.empty {
   color: var(--muted);
 }
 
+/* Enriched injury items */
+li.injury-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  list-style: none;
+}
+
+.injury-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.injury-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  color: var(--text);
+}
+
+.body-part-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(155, 177, 209, 0.1);
+  border: 1px solid rgba(155, 177, 209, 0.18);
+  color: var(--muted);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.likelihood-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.likelihood-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.likelihood-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.injury-col-severe   .likelihood-fill { background: var(--danger); }
+.injury-col-moderate .likelihood-fill { background: var(--warning); }
+.injury-col-minor    .likelihood-fill { background: var(--success); }
+
+.likelihood-pct {
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 32px;
+  text-align: right;
+  color: var(--muted);
+}
+
+.injury-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.injury-col-header .subheading { margin: 0; }
+
+.injury-count-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.injury-col-severe   .injury-count-badge { background: rgba(228, 95, 104, 0.15); color: var(--danger); }
+.injury-col-moderate .injury-count-badge { background: rgba(240, 182, 89, 0.15);  color: var(--warning); }
+.injury-col-minor    .injury-count-badge { background: rgba(53, 182, 121, 0.15); color: var(--success); }
+
 .suggestions-list li {
   position: relative;
   padding-left: 24px;

@@ -1,4 +1,52 @@
-from typing import List, Dict
+from typing import List, Dict, Any
+
+INJURY_META: Dict[str, Dict[str, Any]] = {
+    "head trauma":                       {"part": "Head",    "base_pct": 55},
+    "head injury":                       {"part": "Head",    "base_pct": 65},
+    "chest compression":                 {"part": "Chest",   "base_pct": 60},
+    "chest impact":                      {"part": "Chest",   "base_pct": 55},
+    "severe chest injury":               {"part": "Chest",   "base_pct": 70},
+    "knee impact":                       {"part": "Legs",    "base_pct": 45},
+    "bruising":                          {"part": "Body",    "base_pct": 35},
+    "minor lacerations":                 {"part": "Skin",    "base_pct": 40},
+    "soft tissue strain":                {"part": "Muscle",  "base_pct": 45},
+    "sprain":                            {"part": "Joints",  "base_pct": 50},
+    "abrasions":                         {"part": "Skin",    "base_pct": 40},
+    "neck strain":                       {"part": "Neck",    "base_pct": 65},
+    "whiplash":                          {"part": "Neck",    "base_pct": 70},
+    "lower back injury":                 {"part": "Spine",   "base_pct": 55},
+    "concussion symptoms":               {"part": "Head",    "base_pct": 50},
+    "pelvis injury":                     {"part": "Pelvis",  "base_pct": 60},
+    "pelvis fracture":                   {"part": "Pelvis",  "base_pct": 50},
+    "rib fracture":                      {"part": "Chest",   "base_pct": 55},
+    "arm fracture":                      {"part": "Arms",    "base_pct": 45},
+    "spinal stress":                     {"part": "Spine",   "base_pct": 60},
+    "spinal injury":                     {"part": "Spine",   "base_pct": 45},
+    "limb bruising":                     {"part": "Limbs",   "base_pct": 65},
+    "disorientation":                    {"part": "Head",    "base_pct": 50},
+    "organ damage":                      {"part": "Torso",   "base_pct": 40},
+    "ejection risk":                     {"part": "Body",    "base_pct": 55},
+    "roof intrusion injury":             {"part": "Head",    "base_pct": 55},
+    "mild neck stiffness (WHIPS active)":{"part": "Neck",    "base_pct": 25},
+    "battery intrusion risk":            {"part": "Body",    "base_pct": 35},
+    "high-voltage system exposure risk": {"part": "Body",    "base_pct": 40},
+}
+
+
+def _enrich(name: str, speed_kmh: float, seatbelt: bool, airbags: bool) -> Dict[str, Any]:
+    meta = INJURY_META.get(name, {"part": "Body", "base_pct": 45})
+    pct = meta["base_pct"]
+    if speed_kmh > 100:
+        pct = min(95, pct + 25)
+    elif speed_kmh > 60:
+        pct = min(90, pct + 15)
+    elif speed_kmh > 30:
+        pct = min(85, pct + 5)
+    if not seatbelt:
+        pct = min(95, pct + 10)
+    if not airbags:
+        pct = min(95, pct + 8)
+    return {"name": name, "part": meta["part"], "pct": pct}
 
 
 def _collision_injury_tokens(collision_type: str) -> List[str]:
@@ -19,64 +67,67 @@ def generate_injury_scenarios(
     risk_level: str = "Low",
     whips: bool = False,
     is_electric: bool = False,
-) -> Dict[str, List[str]]:
-    injuries: Dict[str, List[str]] = {"Minor": [], "Moderate": [], "Severe": []}
+) -> Dict[str, List[Dict[str, Any]]]:
+    raw: Dict[str, List[str]] = {"Minor": [], "Moderate": [], "Severe": []}
     tokens = _collision_injury_tokens(collision_type)
 
     if speed_kmh <= 30:
-        injuries["Minor"] = [tokens[0], "bruising", "minor lacerations"]
+        raw["Minor"] = [tokens[0], "bruising", "minor lacerations"]
         if not seatbelt:
-            injuries["Moderate"].append("soft tissue strain")
+            raw["Moderate"].append("soft tissue strain")
     elif speed_kmh <= 60:
-        injuries["Minor"] = [tokens[0], "sprain", "abrasions"]
-        injuries["Moderate"] = [tokens[1], "concussion symptoms"]
+        raw["Minor"] = [tokens[0], "sprain", "abrasions"]
+        raw["Moderate"] = [tokens[1], "concussion symptoms"]
         if not airbags:
-            injuries["Moderate"].append("chest impact")
+            raw["Moderate"].append("chest impact")
         if not seatbelt:
-            injuries["Severe"].append("head trauma")
+            raw["Severe"].append("head trauma")
     else:
-        injuries["Moderate"] = [tokens[1], "rib fracture", "disorientation"]
-        injuries["Severe"] = [tokens[2], "organ damage", "spinal injury"]
+        raw["Moderate"] = [tokens[1], "rib fracture", "disorientation"]
+        raw["Severe"] = [tokens[2], "organ damage", "spinal injury"]
         if not seatbelt:
-            injuries["Severe"].append("ejection risk")
+            raw["Severe"].append("ejection risk")
         if not airbags:
-            injuries["Severe"].append("severe chest injury")
+            raw["Severe"].append("severe chest injury")
 
     if collision_type == "side" and speed_kmh > 40:
-        injuries["Severe"].append("pelvis fracture")
+        raw["Severe"].append("pelvis fracture")
     if collision_type == "rear" and not seatbelt:
-        injuries["Moderate"].append("whiplash")
+        raw["Moderate"].append("whiplash")
     if collision_type == "rollover" and not airbags:
-        injuries["Severe"].append("roof intrusion injury")
+        raw["Severe"].append("roof intrusion injury")
 
-    # WHIPS reduces rear-collision neck and whiplash severity
     if whips and collision_type == "rear":
-        injuries["Severe"] = [i for i in injuries["Severe"] if i not in ("neck strain", "whiplash")]
-        injuries["Moderate"] = [i for i in injuries["Moderate"] if i != "whiplash"]
+        raw["Severe"] = [i for i in raw["Severe"] if i not in ("neck strain", "whiplash")]
+        raw["Moderate"] = [i for i in raw["Moderate"] if i != "whiplash"]
         if speed_kmh > 30:
-            injuries["Minor"].append("mild neck stiffness (WHIPS active)")
+            raw["Minor"].append("mild neck stiffness (WHIPS active)")
 
-    # EV-specific: battery intrusion risk on severe side/rollover crashes
     if is_electric and risk_level == "High":
         if collision_type in ("side", "rollover"):
-            injuries["Severe"].append("battery intrusion risk")
-        injuries["Moderate"].append("high-voltage system exposure risk")
+            raw["Severe"].append("battery intrusion risk")
+        raw["Moderate"].append("high-voltage system exposure risk")
 
-    # cap severity to match risk level
     if risk_level == "Low":
-        injuries["Severe"] = []
-        injuries["Moderate"] = injuries["Moderate"][:1]
+        raw["Severe"] = []
+        raw["Moderate"] = raw["Moderate"][:1]
     elif risk_level == "Medium":
-        injuries["Severe"] = injuries["Severe"][:1]
+        raw["Severe"] = raw["Severe"][:1]
 
-    for severity in injuries:
-        injuries[severity] = list(dict.fromkeys(injuries[severity]))
-    return injuries
+    for sev in raw:
+        raw[sev] = list(dict.fromkeys(raw[sev]))
+
+    return {
+        sev: [_enrich(name, speed_kmh, seatbelt, airbags) for name in names]
+        for sev, names in raw.items()
+    }
 
 
-def summarize_injuries(injuries: Dict[str, List[str]]) -> List[str]:
+def summarize_injuries(injuries: Dict[str, List[Dict[str, Any]]]) -> List[str]:
     summary = []
     for category in ["Severe", "Moderate", "Minor"]:
-        if injuries.get(category):
-            summary.append(f"{category} injuries: {', '.join(injuries[category])}")
+        items = injuries.get(category, [])
+        if items:
+            names = ", ".join(i["name"] if isinstance(i, dict) else i for i in items)
+            summary.append(f"{category} injuries: {names}")
     return summary
