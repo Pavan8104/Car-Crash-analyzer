@@ -357,10 +357,24 @@
       line-height: 1.7;
     }
 
-    /* mobile: stack flow boxes vertically */
+    /* -- tablet: stack flow, smaller grids -- */
     @media (max-width: 700px) {
-      .flow-row    { flex-direction: column; align-items: stretch; }
-      .flow-arrow  { transform: rotate(90deg); align-self: center; }
+      .flow-row          { flex-direction: column; align-items: stretch; }
+      .flow-arrow        { transform: rotate(90deg); align-self: center; }
+      .v-section         { padding: 18px 16px; }
+      .sensor-grid       { grid-template-columns: 1fr 1fr; }
+      .recipient-grid    { grid-template-columns: 1fr 1fr; }
+      .health-grid       { grid-template-columns: 1fr 1fr; }
+      .top-bar           { flex-direction: column; align-items: flex-start; }
+      .header-btn-group  { flex-direction: row; flex-wrap: wrap; margin-top: 0; }
+    }
+
+    /* -- phone: everything single column -- */
+    @media (max-width: 420px) {
+      .sensor-grid    { grid-template-columns: 1fr; }
+      .recipient-grid { grid-template-columns: 1fr; }
+      .health-grid    { grid-template-columns: 1fr; }
+      .v-section      { padding: 14px 12px; }
     }
 
   </style>
