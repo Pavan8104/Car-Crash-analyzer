@@ -66,4 +66,5 @@ python main.py --speed 80 --collision frontal --seatbelt --airbags --json
 - Add more detailed vehicle and occupant profiles
 - Introduce damage severity scoring and confidence ranges
 - Add historical crash scenario templates and report export
-- Expand UI with scenario comparison and charts
+- Expand UI with scenario comparison and charts 
+This is only idea for education
